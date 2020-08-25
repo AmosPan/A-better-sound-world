@@ -1,0 +1,27 @@
+%% the inverse method, flow
+function q=inverse_flow(u,grids,mics,f,delta_t)
+pref=2e-5;c0=343;rho0=1.21;
+k=2*pi*f/c0;
+Ng=size(grids,1);Nm=size(mics,1);
+p_f=u;
+num=1:Ng;
+G=zeros(Nm,length(num));
+M=0.17;
+beta=sqrt(1-M^2);
+for i=1:Nm
+    for j=1:Ng
+        if ismember(j,num)
+            r=norm(mics(i,:)-grids(j,:));
+            R1=sqrt((mics(i,1)-grids(j,1))^2+beta^2*((mics(i,2)-grids(j,2))^2+(mics(i,3)-grids(j,3))^2));
+            R=(M*(mics(i,1)-grids(j,1))+R1)/beta^2;
+            G(i,j)=exp(-1i*2*pi*f*delta_t(i,j))/(4*pi*r);
+%             G(i,j)=exp(-1i*k*distant(i,j))/(4*pi*r);
+        else
+            G(i,j)=0;
+        end
+    end
+end
+% q=pinv(G)*p_f;
+[a,s,b] = csvd(G);
+lambda_l = l_curve (a,s,p_f);
+q = tikhonov (a,s,b,p_f,lambda_l);
